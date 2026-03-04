@@ -1,0 +1,35 @@
+name: Bili Check
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '*/5 * * * *' # 每5分钟运行一次
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install requests
+        run: pip install requests
+
+      - name: Run script
+        env:
+          BARK_KEY: ${{ secrets.BARK_KEY }}
+          ROOM_ID: ${{ secrets.ROOM_ID }}
+        run: python check_live.py
+
+      - name: Save status # 这一步是为了记录状态，防止重复推送
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add status.txt
+          git commit -m "Update live status" || exit 0
+          git push
